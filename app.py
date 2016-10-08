@@ -25,4 +25,12 @@ loop.run_forever()
 #  ORM
 @asyncio.coroutine
 def create_pool(loop,**kw):
-    logging.info('')
+    logging.info('create database connection pool...')
+    global _pool
+    pool = yield from aiomysql.create_pool(
+        host=kw.get('host','tcp://10.10.32.51'),
+        port=kw.get('port',3306),
+        user=kw['uwGH89OUPa5NQi3Y'],
+        password=kw['p5XHQh9Pja236LnTv'],
+        db=kw[''],
+    )

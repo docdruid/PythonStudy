@@ -8,6 +8,7 @@ from aiohttp import web
 def index(request):
     return web.Response(body=b'<h1>Awesome</h1>',content_type='text/html',charset='UTF-8')
 
+#Run Server
 @asyncio.coroutine
 def init(loop):
     app = web.Application(loop=loop)
@@ -19,3 +20,7 @@ def init(loop):
 loop = asyncio.get_event_loop()
 loop.run_until_complete(init(loop))
 loop.run_forever()
+
+
+#  ORM
+

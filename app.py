@@ -1,12 +1,17 @@
 import logging; logging.basicConfig(level=logging.INFO)
+import os;
 
 import asyncio, os, json, time
 from datetime import datetime
 
 from aiohttp import web
 
+os.system("python ./ORM.py")
+
 def index(request):
     return web.Response(body=b'<h1>Awesome</h1>',content_type='text/html',charset='UTF-8')
+
+
 
 #Run Server
 @asyncio.coroutine

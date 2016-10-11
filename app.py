@@ -206,3 +206,99 @@ class ModelMetaclass(type):
         attrs['__update__'] = 'update `%s` set %s where `%s`=?' % (tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
         attrs['__delete__'] = 'delete from `%s` where `%s`=?' % (tableName, primaryKey)
         return type.__new__(cls, name, bases, attrs)                                  
+
+        import asyncio, os, json, time
+from datetime import datetime
+
+from aiohttp import web
+
+#  ORM
+
+#  Connect pool
+@asyncio.coroutine
+def create_pool(loop,**kw):
+    logging.info('create database connection pool...')
+    global _pool
+    pool = yield from aiomysql.create_pool(
+        host=kw.get('host','127.0.0.1'),
+        port=kw.get('port',3307),
+        user=kw['root'],
+        password=kw['google358599'],
+        db=kw['pythonstudy'],
+        autocommit=kw.get('autocommit',True),
+        maxsize=kw.get('maxsize',10),
+        minsize=kw.get('minsize',1),
+        loop=loop
+    )
+
+#   Select
+@asyncio.coroutine
+def select(sql,args,size=None):
+    log(sql,args)
+    global _pool
+    with(yield from _pool) as conn:
+        cur = yield from conn.cursor(aiomysql.DictCursor)
+        yield from cur.execute(sql.replace('?','%s'),args or ())
+        if size:
+            rs=yield from cur.fetchmany(size)
+        else:
+            rs=yield from cur.fetchall()    
+        yield from cur.close()
+        logging.info('rows returned:%s' % len(rs))    
+        return rs
+
+#   Insert,Update,Delete
+@asyncio.coroutine    
+def excute(sql,args):
+    log(sql)
+    with (yield from _pool) as conn:
+        try:
+            cur=yield from conn.cursor()
+            yield from cur.excute(sql.replace('?','%s'),args)
+            affected=cur.rowcount
+            yield from cur.close()
+        except BaseException as e:
+            raise
+        return affected    
+
+
+        import time, uuid
+
+from orm import Model, StringField, BooleanField, FloatField, TextField
+
+def next_id():
+    return '%015d%s000' % (int(time.time() * 1000), uuid.uuid4().hex)
+
+class User(Model):
+    __table__ = 'users'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    email = StringField(ddl='varchar(50)')
+    passwd = StringField(ddl='varchar(50)')
+    admin = BooleanField()
+    name = StringField(ddl='varchar(50)')
+    image = StringField(ddl='varchar(500)')
+    created_at = FloatField(default=time.time)
+
+class Blog(Model):
+    __table__ = 'blogs'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
+    user_name = StringField(ddl='varchar(50)')
+    user_image = StringField(ddl='varchar(500)')
+    name = StringField(ddl='varchar(50)')
+    summary = StringField(ddl='varchar(200)')
+    content = TextField()
+    created_at = FloatField(default=time.time)
+
+class Comment(Model):
+    __table__ = 'comments'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    blog_id = StringField(ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
+    user_name = StringField(ddl='varchar(50)')
+    user_image = StringField(ddl='varchar(500)')
+    content = TextField()
+    created_at = FloatField(default=time.time)
